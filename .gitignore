@@ -4,3 +4,7 @@
 /cmake_install.cmake
 /compile_commands.json
 /xmms2-mpris
+/src/mpris-object.c
+/src/mpris-object.h
+/src/mpris-player.c
+/src/mpris-player.h
