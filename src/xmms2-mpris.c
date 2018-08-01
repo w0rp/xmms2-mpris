@@ -9,6 +9,15 @@
 #include "mpris-object.h"
 #include "mpris-player.h"
 
+struct App {
+    xmmsc_connection_t* con;
+    GDBusConnection* bus;
+    MprisMediaPlayer2* main_object;
+    MprisMediaPlayer2Player* player;
+};
+
+static struct App app;
+
 /** Given any XMMS2 signal function, get an int from XMMS. */
 int32_t get_xmms2_int(
     xmmsc_connection_t* con,
@@ -203,10 +212,24 @@ MprisMediaPlayer2* init_main_dbus_object(GDBusConnection* bus) {
     return main_object;
 }
 
+GVariant* new_metadata_dict_string(const char* key, const char* value) {
+    return g_variant_new_dict_entry(
+        g_variant_new_string(key),
+        g_variant_new_variant(g_variant_new_string(value))
+    );
+}
+
+GVariant* new_metadata_dict_int64(const char* key, int64_t value) {
+    return g_variant_new_dict_entry(
+        g_variant_new_string(key),
+        g_variant_new_variant(g_variant_new_int64(value))
+    );
+}
+
 MprisMediaPlayer2Player* init_player_dbus_object(GDBusConnection* bus) {
     MprisMediaPlayer2Player* player = mpris_media_player2_player_skeleton_new();
 
-    mpris_media_player2_player_set_playback_status(player, "");
+    mpris_media_player2_player_set_playback_status(player, "Playing");
     mpris_media_player2_player_set_rate(player, 0);
     mpris_media_player2_player_set_volume(player, 0);
     // The position uses the time in microseconds.
@@ -245,10 +268,23 @@ MprisMediaPlayer2Player* init_player_dbus_object(GDBusConnection* bus) {
         player = NULL;
     }
 
+    GVariant* entries[7];
+    int length = 0;
+
+    entries[length++] = new_metadata_dict_string("mpris:trackid", "/org/mpris/MediaPlayer2/CurrentTrack");
+    entries[length++] = new_metadata_dict_string("xesam:title", "lolwat");
+    entries[length++] = new_metadata_dict_string("xesam:artist", "Artist");
+    entries[length++] = new_metadata_dict_string("xesam:album", "Album");
+    entries[length++] = new_metadata_dict_string("xesam:url", "file://wat.mp3");
+    entries[length++] = new_metadata_dict_int64("mpris:length", 100000);
+
+    GVariant* dict = g_variant_new_array(G_VARIANT_TYPE("{sv}"), entries, length);
+    mpris_media_player2_player_set_metadata(player, dict);
+
     return player;
 }
 
-int main(int argc, char** argv) { // NOLINT
+int setup_app() {
     xmmsc_connection_t* con = con = xmmsc_init("xmms2-mpris");
 
     if (!con) {
@@ -280,16 +316,34 @@ int main(int argc, char** argv) { // NOLINT
         return 1;
     }
 
-    // Print playback status.
-    while(1) {
-        get_info(con);
+    app.con = con;
+    app.bus = bus;
+    app.main_object = main_object;
+    app.player = player;
 
-        sleep(1);
+    return 0;
+}
+
+static gboolean timer_callback(gpointer data) {
+    get_info(app.con);
+
+    return true;
+}
+
+int main(int argc, char** argv) { // NOLINT
+    if (setup_app()) {
+        return 1;
     }
 
+    GMainLoop *loop = g_main_loop_new(NULL, false);
+
+    g_timeout_add(1000, timer_callback, NULL);
+
+    g_main_loop_run(loop);
+
     // Clean up.
-    g_object_unref(main_object);
-    g_object_unref(player);
+    g_object_unref(app.main_object);
+    g_object_unref(app.player);
 
     return 0;
 }
