@@ -35,16 +35,16 @@ endif()
 
 # Generate the DBUS mpris main object from the XML interface file.
 add_custom_command(OUTPUT src/mpris-object.c
+    WORKING_DIRECTORY src
     COMMAND ${GDBUSCODEGEN} --interface-prefix org.mpris. --c-namespace Mpris
-        --generate-c-code mpris-object src/mpris2.xml
-        --output-directory=src
+        --generate-c-code mpris-object mpris2.xml
     DEPENDS src/mpris2.xml
 )
 
 add_custom_command(OUTPUT src/mpris-player.c
+    WORKING_DIRECTORY src
     COMMAND ${GDBUSCODEGEN} --interface-prefix org.mpris. --c-namespace Mpris
-        --generate-c-code mpris-player src/mpris2-player.xml
-        --output-directory=src
+        --generate-c-code mpris-player mpris2-player.xml
     DEPENDS src/mpris2-player.xml
 )
 
