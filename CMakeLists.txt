@@ -5,6 +5,8 @@ set(SRC_LIST
     src/xmms2-mpris.c
     src/mpris-object.c
     src/mpris-player.c
+    src/xmms2.c
+    src/mpris.c
 )
 
 # Set C version and warning flags for C compilers.
