@@ -9,6 +9,9 @@
 
 #include "mpris.h"
 
+static NextCallback next_callback;
+static PreviousCallback previous_callback;
+
 GVariant* new_metadata_dict_string(const char* key, const char* value) {
     return g_variant_new_dict_entry(
         g_variant_new_string(key),
@@ -105,6 +108,40 @@ MainObject* init_main_dbus_object(GDBusConnection* bus) {
     return (MainObject*) main_object;
 }
 
+static gboolean handle_mpris_player_next(
+    MprisMediaPlayer2Player* player,
+    GDBusMethodInvocation* invocation,
+    void* user_data
+) {
+    if (next_callback) {
+        next_callback();
+    }
+
+    mpris_media_player2_player_complete_next(
+        (MprisMediaPlayer2Player*) player,
+        invocation
+    );
+
+    return true;
+}
+
+static gboolean handle_mpris_player_previous(
+    MprisMediaPlayer2Player* player,
+    GDBusMethodInvocation* invocation,
+    void* user_data
+) {
+    if (previous_callback) {
+        previous_callback();
+    }
+
+    mpris_media_player2_player_complete_previous(
+        (MprisMediaPlayer2Player*) player,
+        invocation
+    );
+
+    return true;
+}
+
 Player* init_player_dbus_object(GDBusConnection* bus) {
     MprisMediaPlayer2Player* player = mpris_media_player2_player_skeleton_new();
 
@@ -115,15 +152,28 @@ Player* init_player_dbus_object(GDBusConnection* bus) {
     mpris_media_player2_player_set_position(player, 0);
     mpris_media_player2_player_set_minimum_rate(player, 0);
     mpris_media_player2_player_set_maximum_rate(player, 0);
-    mpris_media_player2_player_set_can_go_next(player, false);
-    mpris_media_player2_player_set_can_go_previous(player, false);
+    mpris_media_player2_player_set_can_go_next(player, true);
+    mpris_media_player2_player_set_can_go_previous(player, true);
     mpris_media_player2_player_set_can_play(player, false);
     mpris_media_player2_player_set_can_pause(player, false);
     mpris_media_player2_player_set_can_seek(player, false);
-    mpris_media_player2_player_set_can_control(player, false);
+    mpris_media_player2_player_set_can_control(player, true);
 
-    // TODO(later) Implement the next method.
-    // TODO(later) Implement the previous method.
+    next_callback = NULL;
+    previous_callback = NULL;
+
+    g_signal_connect(
+        player,
+        "handle-next",
+        (GCallback) handle_mpris_player_next,
+        NULL
+    );
+    g_signal_connect(
+        player,
+        "handle-previous",
+        (GCallback) handle_mpris_player_previous,
+        NULL
+    );
     // TODO(later) Implement the pause method.
     // TODO(later) Implement the playpause method.
     // TODO(later) Implement the stop method.
@@ -148,4 +198,12 @@ Player* init_player_dbus_object(GDBusConnection* bus) {
     }
 
     return (Player*) player;
+}
+
+void set_next_callback(NextCallback callback) {
+    next_callback = callback;
+}
+
+void set_previous_callback(PreviousCallback callback) {
+    previous_callback = callback;
 }

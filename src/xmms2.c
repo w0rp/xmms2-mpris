@@ -124,3 +124,21 @@ void get_xmms_track_info_unref(XmmsTrackInfo* info) {
     xmmsv_unref(info->_xmms_dict);
     xmmsc_result_unref(info->_xmms_media_result);
 }
+
+void switch_track(xmmsc_connection_t* con, int32_t direction) {
+    xmmsc_result_t* next_result = xmmsc_playlist_set_next_rel(con, direction);
+    xmmsc_result_wait(next_result);
+    xmmsc_result_unref(next_result);
+
+    xmmsc_result_t* playback_result = xmmsc_playback_tickle(con);
+    xmmsc_result_wait(playback_result);
+    xmmsc_result_unref(playback_result);
+}
+
+void move_to_next_xmms_track(xmmsc_connection_t* con) {
+    switch_track(con, 1);
+}
+
+void move_to_previous_xmms_track(xmmsc_connection_t* con) {
+    switch_track(con, -1);
+}

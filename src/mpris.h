@@ -19,4 +19,12 @@ MainObject* init_main_dbus_object(GDBusConnection* bus);
 /** Set up the player MPRIS Object. */
 Player* init_player_dbus_object(GDBusConnection* bus);
 
+typedef void (*NextCallback)();
+/** Set up a callback for clicking the next track button. */
+void set_next_callback(NextCallback callback);
+
+typedef void (*PreviousCallback)();
+/** Set up a callback for clicking the previous track button. */
+void set_previous_callback(PreviousCallback callback);
+
 #endif

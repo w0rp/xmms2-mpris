@@ -73,12 +73,23 @@ static gboolean timer_callback(G_GNUC_UNUSED gpointer data) {
     return true;
 }
 
+void move_to_next_track() {
+    move_to_next_xmms_track(app.con);
+}
+
+void move_to_previous_track() {
+    move_to_previous_xmms_track(app.con);
+}
+
 int main(int argc, char** argv) {
     if (setup_app()) {
         return 1;
     }
 
     GMainLoop *loop = g_main_loop_new(NULL, false);
+
+    set_next_callback(move_to_next_track);
+    set_previous_callback(move_to_previous_track);
 
     g_timeout_add(1000, timer_callback, NULL);
 
