@@ -81,6 +81,22 @@ void move_to_previous_track() {
     move_to_previous_xmms_track(app.con);
 }
 
+void play_track() {
+    play_xmms_track(app.con);
+}
+
+void pause_track() {
+    pause_xmms_track(app.con);
+}
+
+void toggle_track() {
+    if (get_xmms_playback_status(app.con) == XMMS_PLAYBACK_STATUS_PLAY) {
+        pause_track();
+    } else {
+        play_track();
+    }
+}
+
 int main(int argc, char** argv) {
     if (setup_app()) {
         return 1;
@@ -90,6 +106,9 @@ int main(int argc, char** argv) {
 
     set_next_callback(move_to_next_track);
     set_previous_callback(move_to_previous_track);
+    set_play_callback(play_track);
+    set_pause_callback(pause_track);
+    set_toggle_callback(toggle_track);
 
     g_timeout_add(1000, timer_callback, NULL);
 

@@ -11,6 +11,9 @@
 
 static NextCallback next_callback;
 static PreviousCallback previous_callback;
+static PlayCallback play_callback;
+static PauseCallback pause_callback;
+static ToggleCallback toggle_callback;
 
 GVariant* new_metadata_dict_string(const char* key, const char* value) {
     return g_variant_new_dict_entry(
@@ -108,7 +111,7 @@ MainObject* init_main_dbus_object(GDBusConnection* bus) {
     return (MainObject*) main_object;
 }
 
-static gboolean handle_mpris_player_next(
+static gboolean mpris_next(
     MprisMediaPlayer2Player* player,
     GDBusMethodInvocation* invocation,
     void* user_data
@@ -117,15 +120,12 @@ static gboolean handle_mpris_player_next(
         next_callback();
     }
 
-    mpris_media_player2_player_complete_next(
-        (MprisMediaPlayer2Player*) player,
-        invocation
-    );
+    mpris_media_player2_player_complete_next(player, invocation);
 
     return true;
 }
 
-static gboolean handle_mpris_player_previous(
+static gboolean mpris_previous(
     MprisMediaPlayer2Player* player,
     GDBusMethodInvocation* invocation,
     void* user_data
@@ -134,12 +134,64 @@ static gboolean handle_mpris_player_previous(
         previous_callback();
     }
 
-    mpris_media_player2_player_complete_previous(
-        (MprisMediaPlayer2Player*) player,
-        invocation
-    );
+    mpris_media_player2_player_complete_previous(player, invocation);
 
     return true;
+}
+
+static gboolean mpris_play(
+    MprisMediaPlayer2Player* player,
+    GDBusMethodInvocation* invocation,
+    void* user_data
+) {
+    if (play_callback) {
+        play_callback();
+    }
+
+    mpris_media_player2_player_complete_play(player, invocation);
+
+    return true;
+}
+
+static gboolean mpris_pause(
+    MprisMediaPlayer2Player* player,
+    GDBusMethodInvocation* invocation,
+    void* user_data
+) {
+    if (pause_callback) {
+        pause_callback();
+    }
+
+    mpris_media_player2_player_complete_pause(player, invocation);
+
+    return true;
+}
+
+static gboolean mpris_toggle(
+    MprisMediaPlayer2Player* player,
+    GDBusMethodInvocation* invocation,
+    void* user_data
+) {
+    if (toggle_callback) {
+        toggle_callback();
+    }
+
+    mpris_media_player2_player_complete_play_pause(player, invocation);
+
+    return true;
+}
+
+/** Connect a callback function to the MPRIS player. */
+void connect_player_callback(
+    MprisMediaPlayer2Player* player,
+    const char* name,
+    gboolean (*callback)(
+        MprisMediaPlayer2Player* player,
+        GDBusMethodInvocation* invocation,
+        void* user_data
+    )
+) {
+    g_signal_connect(player, name, (GCallback) callback, NULL);
 }
 
 Player* init_player_dbus_object(GDBusConnection* bus) {
@@ -154,30 +206,24 @@ Player* init_player_dbus_object(GDBusConnection* bus) {
     mpris_media_player2_player_set_maximum_rate(player, 0);
     mpris_media_player2_player_set_can_go_next(player, true);
     mpris_media_player2_player_set_can_go_previous(player, true);
-    mpris_media_player2_player_set_can_play(player, false);
-    mpris_media_player2_player_set_can_pause(player, false);
+    mpris_media_player2_player_set_can_play(player, true);
+    mpris_media_player2_player_set_can_pause(player, true);
     mpris_media_player2_player_set_can_seek(player, false);
     mpris_media_player2_player_set_can_control(player, true);
 
     next_callback = NULL;
     previous_callback = NULL;
+    play_callback = NULL;
+    pause_callback = NULL;
+    toggle_callback = NULL;
 
-    g_signal_connect(
-        player,
-        "handle-next",
-        (GCallback) handle_mpris_player_next,
-        NULL
-    );
-    g_signal_connect(
-        player,
-        "handle-previous",
-        (GCallback) handle_mpris_player_previous,
-        NULL
-    );
-    // TODO(later) Implement the pause method.
+    connect_player_callback(player, "handle-next", mpris_next);
+    connect_player_callback(player, "handle-previous", mpris_previous);
+    connect_player_callback(player, "handle-play", mpris_play);
+    connect_player_callback(player, "handle-pause", mpris_pause);
+    connect_player_callback(player, "handle-play-pause", mpris_toggle);
     // TODO(later) Implement the playpause method.
     // TODO(later) Implement the stop method.
-    // TODO(later) Implement the play method.
     // TODO(later) Implement the seek method.
     // TODO(later) Implement the setposition method.
     // TODO(later) Implement the openuri method.
@@ -206,4 +252,16 @@ void set_next_callback(NextCallback callback) {
 
 void set_previous_callback(PreviousCallback callback) {
     previous_callback = callback;
+}
+
+void set_play_callback(PlayCallback callback) {
+    play_callback = callback;
+}
+
+void set_pause_callback(PauseCallback callback) {
+    pause_callback = callback;
+}
+
+void set_toggle_callback(ToggleCallback callback) {
+    toggle_callback = callback;
 }

@@ -27,4 +27,16 @@ typedef void (*PreviousCallback)();
 /** Set up a callback for clicking the previous track button. */
 void set_previous_callback(PreviousCallback callback);
 
+typedef void (*PlayCallback)();
+/** Set up a callback for clicking the play button. */
+void set_play_callback(PlayCallback callback);
+
+typedef void (*PauseCallback)();
+/** Set up a callback for clicking the pause button. */
+void set_pause_callback(PauseCallback callback);
+
+typedef void (*ToggleCallback)();
+/** Set up a callback for clicking the play/pause button. */
+void set_toggle_callback(ToggleCallback callback);
+
 #endif

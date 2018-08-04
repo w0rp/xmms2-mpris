@@ -20,3 +20,8 @@ make
 
 You can run the client with `./xmms2-mpris`. The `xmms2d` will need to already
 be running.
+
+## Known issues
+
+* If you pause a track via MPRIS then move to the next track, the track won't
+  update until you hit play in the UI.

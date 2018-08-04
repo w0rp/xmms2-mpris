@@ -91,8 +91,12 @@ xmmsc_result_t* get_media_info(
     return result;
 }
 
+int32_t get_xmms_playback_status(xmmsc_connection_t* con) {
+    return get_xmms2_int(con, xmmsc_playback_status, 0);
+}
+
 void get_xmms_track_info(xmmsc_connection_t* con, XmmsTrackInfo* info) {
-    int32_t status_id = get_xmms2_int(con, xmmsc_playback_status, 0);
+    int32_t status_id = get_xmms_playback_status(con);
 
     // These strings are the three values mpris requires.
     switch(status_id) {
@@ -141,4 +145,14 @@ void move_to_next_xmms_track(xmmsc_connection_t* con) {
 
 void move_to_previous_xmms_track(xmmsc_connection_t* con) {
     switch_track(con, -1);
+}
+
+void play_xmms_track(xmmsc_connection_t* con) {
+    xmmsc_result_t* result = xmmsc_playback_start(con);
+    xmmsc_result_unref(result);
+}
+
+void pause_xmms_track(xmmsc_connection_t* con) {
+    xmmsc_result_t* result = xmmsc_playback_pause(con);
+    xmmsc_result_unref(result);
 }
