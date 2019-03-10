@@ -43,4 +43,7 @@ typedef void (*SetPositionCallback)(gint64 position);
 /** Set up a callback for jumping to a position in the current track */
 void set_set_position_callback(SetPositionCallback callback);
 
+void update_position(Player* player, int64_t position);
+void update_status(Player* player, const char* status);
+
 #endif

@@ -5,12 +5,6 @@
 
 /** Track info from XMMS. */
 typedef struct XmmsTrackInfo {
-    /** The unique track ID. */
-    int32_t id;
-    /** The playtime from XMMS in milliseconds. */
-    int32_t playtime;
-    /** The player status. */
-    const char* status;
     /** The artist. */
     const char* artist;
     /** The track title. */
@@ -21,8 +15,6 @@ typedef struct XmmsTrackInfo {
     const char* url;
     /** The track duration in milliseconds. */
     int32_t duration;
-    void* _xmms_dict;
-    void* _xmms_media_result;
 } XmmsTrackInfo;
 
 #endif

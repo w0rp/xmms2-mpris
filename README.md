@@ -8,7 +8,7 @@ implements MPRIS controls for controlling XMMS2.
 Install the following things first.
 
 ```
-sudo apt install cmake libxmmsclient-dev libglib2.0-dev
+sudo apt install cmake libxmmsclient-dev libglib2.0-dev libxmmsclient-glib-dev
 ```
 
 Then build the project with CMake.

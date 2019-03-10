@@ -18,6 +18,7 @@ typedef struct App {
     MainObject* main_object;
     /** The Player object for MPRIS */
     Player* player;
+    PlaybackStatus status;
 } App;
 
 /** The global data for the app. */
@@ -55,22 +56,15 @@ int setup_app() {
         return 1;
     }
 
+    init_xmms_loop(con);
+
     app.con = con;
     app.bus = bus;
     app.main_object = main_object;
     app.player = player;
+    app.status = STATUS_STOPPED;
 
     return 0;
-}
-
-static gboolean timer_callback(G_GNUC_UNUSED gpointer data) {
-    XmmsTrackInfo xmms_info;
-
-    get_xmms_track_info(app.con, &xmms_info);
-    display_track_info(app.player, &xmms_info);
-    get_xmms_track_info_unref(&xmms_info);
-
-    return true;
 }
 
 void move_to_next_track() {
@@ -90,7 +84,7 @@ void pause_track() {
 }
 
 void toggle_track() {
-    if (get_xmms_playback_status(app.con) == XMMS_PLAYBACK_STATUS_PLAY) {
+    if (app.status == STATUS_PLAYING) {
         pause_track();
     } else {
         play_track();
@@ -98,7 +92,33 @@ void toggle_track() {
 }
 
 void set_position(gint64 position) {
-    seek_xmms_track_position(app.con, position / 1000);
+    // Seek in a precision of one second.
+    seek_xmms_track_position(app.con, (position / 1000 / 1000) * 1000);
+}
+
+void handle_playtime(int32_t playtime) {
+    // Handle the position in a precision of one second.
+    update_position(app.player, (playtime / 1000) * 1000 * 1000);
+}
+
+void handle_status(PlaybackStatus status) {
+    app.status = status;
+
+    switch(status) {
+    case STATUS_PLAYING:
+        update_status(app.player, "Playing");
+    break;
+    case STATUS_PAUSED:
+        update_status(app.player, "Paused");
+    break;
+    default:
+        update_status(app.player, "Stopped");
+    break;
+    }
+}
+
+void handle_track_info(XmmsTrackInfo* info) {
+    display_track_info(app.player, info);
 }
 
 int main(int argc, char** argv) {
@@ -108,14 +128,18 @@ int main(int argc, char** argv) {
 
     GMainLoop *loop = g_main_loop_new(NULL, false);
 
+    // Set up callbacks for xmms2 events.
+    set_xmms_playtime_callback(handle_playtime);
+    set_xmms_status_callback(handle_status);
+    set_xmms_track_info_callback(handle_track_info);
+
+    // Set up callbacks for MPRIS events.
     set_next_callback(move_to_next_track);
     set_previous_callback(move_to_previous_track);
     set_play_callback(play_track);
     set_pause_callback(pause_track);
     set_toggle_callback(toggle_track);
     set_set_position_callback(set_position);
-
-    g_timeout_add(1000, timer_callback, NULL);
 
     g_main_loop_run(loop);
 

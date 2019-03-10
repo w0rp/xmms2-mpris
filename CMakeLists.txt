@@ -25,6 +25,7 @@ find_package(PkgConfig)
 # This doesn't check for the right package.
 pkg_check_modules(XMMS2 REQUIRED xmms2-client>=0.8)
 pkg_check_modules(GLIB2 REQUIRED glib-2.0 gio-2.0)
+pkg_check_modules(XMMS2GLIB REQUIRED xmms2-client-glib>=0.8)
 pkg_check_modules(GIOUNIX gio-unix-2.0)
 
 # Require gdbus-codegen to build this client.
@@ -51,6 +52,8 @@ add_custom_command(OUTPUT src/mpris-player.c
 # Include xmms2 stuff
 include_directories(${XMMS2_INCLUDE_DIRS})
 link_directories(${XMMS2_LIBRARY_DIRS})
+include_directories(${XMMS2GLIB_INCLUDE_DIRS})
+link_directories(${XMMS2GLIB_LIBRARY_DIRS})
 
 # Include glib stuff
 include_directories(${GIOUNIX_INCLUDE_DIRS})
@@ -59,4 +62,4 @@ include_directories(${GLIB2_INCLUDE_DIRS})
 link_directories(${GLIB2_LIBRARY_DIRS})
 
 add_executable(xmms2-mpris ${SRC_LIST})
-target_link_libraries(xmms2-mpris ${XMMS2_LIBRARIES} ${GLIB2_LIBRARIES})
+target_link_libraries(xmms2-mpris ${XMMS2_LIBRARIES} ${XMMS2GLIB_LIBRARIES} ${GLIB2_LIBRARIES})

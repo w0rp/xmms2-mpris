@@ -58,8 +58,6 @@ void display_track_info(Player* player, XmmsTrackInfo* info) {
 
     GVariant* dict = g_variant_new_array(G_VARIANT_TYPE("{sv}"), entries, length);
     mpris_media_player2_player_set_metadata((MprisMediaPlayer2Player*) player, dict);
-
-    mpris_media_player2_player_set_playback_status((MprisMediaPlayer2Player*) player, info->status);
 }
 
 GDBusConnection* get_dbus_connection() {
@@ -287,4 +285,12 @@ void set_toggle_callback(ToggleCallback callback) {
 
 void set_set_position_callback(SetPositionCallback callback) {
     set_position_callback = callback;
+}
+
+void update_status(Player* player, const char* status) {
+    mpris_media_player2_player_set_playback_status((MprisMediaPlayer2Player*) player, status);
+}
+
+void update_position(Player* player, int64_t position) {
+    mpris_media_player2_player_set_position((MprisMediaPlayer2Player*) player, position);
 }

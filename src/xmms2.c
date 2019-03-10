@@ -1,28 +1,72 @@
 #include <stdint.h>
 
 #include <xmmsclient/xmmsclient.h>
+#include <xmmsclient/xmmsclient-glib.h>
 
 #include "xmms2.h"
 
-/** Given any XMMS2 signal function, get an int from XMMS. */
-int32_t get_xmms2_int(
-    xmmsc_connection_t* con,
-    xmmsc_result_t* (*func)(xmmsc_connection_t*),
-    int32_t def
-) {
-    xmmsc_result_t* result = (*func)(con);
-    xmmsc_result_wait(result);
-    xmmsv_t* value = xmmsc_result_get_value(result);
-    int32_t number;
+static PlayTimeCallback playtime_callback;
+static StatusCallback status_callback;
+static TrackInfoCallback track_info_callback;
 
-    if (!xmmsv_get_int(value, &number)) {
-        number = def;
+void set_xmms_playtime_callback(PlayTimeCallback callback) {
+    playtime_callback = callback;
+}
+
+void set_xmms_status_callback(StatusCallback callback) {
+    status_callback = callback;
+}
+
+void set_xmms_track_info_callback(TrackInfoCallback callback) {
+    track_info_callback = callback;
+}
+
+bool handle_xmms_error(xmmsv_t* value) {
+    const char* error;
+
+    if (xmmsv_get_error(value, &error)) {
+        fprintf(stderr, "%s\n", error);
+
+        return false;
     }
 
-    xmmsc_result_unref(result);
-
-    return number;
+    return true;
 }
+
+int xmms_playtime_callback(xmmsv_t* value, void* data) {
+    int32_t playtime;
+
+    if (handle_xmms_error(value) && xmmsv_get_int(value, &playtime)) {
+        if (playtime_callback) {
+            playtime_callback(playtime);
+        }
+    }
+
+    return true;
+}
+
+int xmms_status_callback(xmmsv_t* value, void* data) {
+    int32_t status;
+
+    if (handle_xmms_error(value) && xmmsv_get_int(value, &status)) {
+        if (status_callback) {
+            switch(status) {
+            case XMMS_PLAYBACK_STATUS_PLAY:
+                status_callback(STATUS_PLAYING);
+            break;
+            case XMMS_PLAYBACK_STATUS_PAUSE:
+                status_callback(STATUS_PAUSED);
+            break;
+            default:
+                status_callback(STATUS_STOPPED);
+            break;
+            }
+        }
+    }
+
+    return true;
+}
+
 
 /** Get a string from a media item dictionary, or use a default. */
 const char* get_dict_string(xmmsv_t* dict, const char* key, const char* def) {
@@ -48,7 +92,7 @@ int32_t get_dict_int(xmmsv_t* dict, const char* key, int32_t def) {
 }
 
 /**
- * Get info about the currently playing track.
+ * Handle info for the currently playing track.
  *
  * The dictionary will be set up with the following keys.
  *
@@ -77,56 +121,55 @@ int32_t get_dict_int(xmmsv_t* dict, const char* key, int32_t def) {
  * tracknr            - The track number.
  * url                - A URL for the track.
  */
-xmmsc_result_t* get_media_info(
-    xmmsc_connection_t* con,
-    int32_t id,
-    xmmsv_t** dict
-) {
-    xmmsc_result_t* result = xmmsc_medialib_get_info(con, id);
-    xmmsc_result_wait(result);
-    xmmsv_t* value = xmmsc_result_get_value(result);
+int handle_xmms_media_info(xmmsv_t* propdict, void *data) {
+    if (handle_xmms_error(propdict)) {
+        XmmsTrackInfo info = (XmmsTrackInfo) {};
 
-    *dict = xmmsv_propdict_to_dict(value, NULL);
+        xmmsv_t* dict = xmmsv_propdict_to_dict(propdict, NULL);
 
-    return result;
-}
+        info.duration = get_dict_int(dict, "duration", 0);
+        info.artist = get_dict_string(dict, "artist", "");
+        info.title = get_dict_string(dict, "title", "");
+        info.album = get_dict_string(dict, "album", "");
+        info.url = get_dict_string(dict, "url", "");
 
-int32_t get_xmms_playback_status(xmmsc_connection_t* con) {
-    return get_xmms2_int(con, xmmsc_playback_status, 0);
-}
+        if (track_info_callback) {
+            track_info_callback(&info);
+        }
 
-void get_xmms_track_info(xmmsc_connection_t* con, XmmsTrackInfo* info) {
-    int32_t status_id = get_xmms_playback_status(con);
-
-    // These strings are the three values mpris requires.
-    switch(status_id) {
-    case XMMS_PLAYBACK_STATUS_PLAY:
-        info->status = "Playing";
-    break;
-    case XMMS_PLAYBACK_STATUS_PAUSE:
-        info->status = "Paused";
-    break;
-    default:
-        info->status = "Stopped";
-    break;
+        xmmsv_unref(dict);
     }
 
-    info->playtime = get_xmms2_int(con, xmmsc_playback_playtime, 0);
-    info->id = get_xmms2_int(con, xmmsc_playback_current_id, 0);
-
-    info->_xmms_dict = NULL;
-    info->_xmms_media_result = get_media_info(con, info->id, (xmmsv_t**) &(info->_xmms_dict));
-
-    info->duration = get_dict_int(info->_xmms_dict, "duration", 0);
-    info->artist = get_dict_string(info->_xmms_dict, "artist", "");
-    info->title = get_dict_string(info->_xmms_dict, "title", "");
-    info->album = get_dict_string(info->_xmms_dict, "album", "");
-    info->url = get_dict_string(info->_xmms_dict, "url", "");
+    return false;
 }
 
-void get_xmms_track_info_unref(XmmsTrackInfo* info) {
-    xmmsv_unref(info->_xmms_dict);
-    xmmsc_result_unref(info->_xmms_media_result);
+int xmms_current_id_callback(xmmsv_t* value, void *data) {
+    int32_t current_id;
+    xmmsc_connection_t* con = data;
+
+    if (handle_xmms_error(value) && xmmsv_get_int(value, &current_id)) {
+        if (track_info_callback) {
+            xmmsc_result_t* result = xmmsc_medialib_get_info(con, current_id);
+            xmmsc_result_notifier_set(result, handle_xmms_media_info, NULL);
+            xmmsc_result_unref(result);
+        }
+    }
+
+    return true;
+}
+
+void init_xmms_loop(xmmsc_connection_t* con) {
+    playtime_callback = NULL;
+
+    XMMS_CALLBACK_SET(con, xmmsc_signal_playback_playtime, xmms_playtime_callback, NULL);
+    XMMS_CALLBACK_SET(con, xmmsc_playback_status, xmms_status_callback, NULL);
+    // We have to listen to this event too.
+    XMMS_CALLBACK_SET(con, xmmsc_broadcast_playback_status, xmms_status_callback, NULL);
+    XMMS_CALLBACK_SET(con, xmmsc_playback_current_id, xmms_current_id_callback, con);
+    // We have to listen to this event too.
+    XMMS_CALLBACK_SET(con, xmmsc_broadcast_playback_current_id, xmms_current_id_callback, con);
+
+    xmmsc_mainloop_gmain_init(con);
 }
 
 void switch_track(xmmsc_connection_t* con, int32_t direction) {
