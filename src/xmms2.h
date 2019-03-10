@@ -19,5 +19,7 @@ void move_to_previous_xmms_track(xmmsc_connection_t* con);
 void play_xmms_track(xmmsc_connection_t* con);
 /** Pause the current XMMS2 track. */
 void pause_xmms_track(xmmsc_connection_t* con);
+/** Set the current track to the given position. */
+void seek_xmms_track_position(xmmsc_connection_t* con, int milliseconds);
 
 #endif

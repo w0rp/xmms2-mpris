@@ -67,7 +67,7 @@ static gboolean timer_callback(G_GNUC_UNUSED gpointer data) {
     XmmsTrackInfo xmms_info;
 
     get_xmms_track_info(app.con, &xmms_info);
-    diplay_track_info(app.player, &xmms_info);
+    display_track_info(app.player, &xmms_info);
     get_xmms_track_info_unref(&xmms_info);
 
     return true;
@@ -97,6 +97,10 @@ void toggle_track() {
     }
 }
 
+void set_position(gint64 position) {
+    seek_xmms_track_position(app.con, position / 1000);
+}
+
 int main(int argc, char** argv) {
     if (setup_app()) {
         return 1;
@@ -109,6 +113,7 @@ int main(int argc, char** argv) {
     set_play_callback(play_track);
     set_pause_callback(pause_track);
     set_toggle_callback(toggle_track);
+    set_set_position_callback(set_position);
 
     g_timeout_add(1000, timer_callback, NULL);
 

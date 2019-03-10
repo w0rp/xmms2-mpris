@@ -14,6 +14,7 @@ static PreviousCallback previous_callback;
 static PlayCallback play_callback;
 static PauseCallback pause_callback;
 static ToggleCallback toggle_callback;
+static SetPositionCallback set_position_callback;
 
 GVariant* new_metadata_dict_string(const char* key, const char* value) {
     return g_variant_new_dict_entry(
@@ -29,7 +30,7 @@ GVariant* new_metadata_dict_int64(const char* key, int64_t value) {
     );
 }
 
-void diplay_track_info(Player* player, XmmsTrackInfo* info) {
+void display_track_info(Player* player, XmmsTrackInfo* info) {
     GVariant* entries[7];
     int length = 0;
 
@@ -53,7 +54,7 @@ void diplay_track_info(Player* player, XmmsTrackInfo* info) {
         entries[length++] = new_metadata_dict_string("xesam:url", info->url);
     }
 
-    entries[length++] = new_metadata_dict_int64("mpris:length", info->duration);
+    entries[length++] = new_metadata_dict_int64("mpris:length", info->duration * 1000);
 
     GVariant* dict = g_variant_new_array(G_VARIANT_TYPE("{sv}"), entries, length);
     mpris_media_player2_player_set_metadata((MprisMediaPlayer2Player*) player, dict);
@@ -181,6 +182,22 @@ static gboolean mpris_toggle(
     return true;
 }
 
+static gboolean mpris_set_position(
+    MprisMediaPlayer2Player* player,
+    GDBusMethodInvocation* invocation,
+    const gchar *track_id,
+    gint64 position,
+    void* user_data
+) {
+    if (set_position_callback) {
+        set_position_callback(position);
+    }
+
+    mpris_media_player2_player_complete_set_position(player, invocation);
+
+    return true;
+}
+
 /** Connect a callback function to the MPRIS player. */
 void connect_player_callback(
     MprisMediaPlayer2Player* player,
@@ -208,7 +225,7 @@ Player* init_player_dbus_object(GDBusConnection* bus) {
     mpris_media_player2_player_set_can_go_previous(player, true);
     mpris_media_player2_player_set_can_play(player, true);
     mpris_media_player2_player_set_can_pause(player, true);
-    mpris_media_player2_player_set_can_seek(player, false);
+    mpris_media_player2_player_set_can_seek(player, true);
     mpris_media_player2_player_set_can_control(player, true);
 
     next_callback = NULL;
@@ -216,16 +233,18 @@ Player* init_player_dbus_object(GDBusConnection* bus) {
     play_callback = NULL;
     pause_callback = NULL;
     toggle_callback = NULL;
+    set_position_callback = NULL;
 
     connect_player_callback(player, "handle-next", mpris_next);
     connect_player_callback(player, "handle-previous", mpris_previous);
     connect_player_callback(player, "handle-play", mpris_play);
     connect_player_callback(player, "handle-pause", mpris_pause);
     connect_player_callback(player, "handle-play-pause", mpris_toggle);
+    g_signal_connect(player, "handle-set-position", (GCallback) mpris_set_position, NULL);
+
     // TODO(later) Implement the playpause method.
     // TODO(later) Implement the stop method.
     // TODO(later) Implement the seek method.
-    // TODO(later) Implement the setposition method.
     // TODO(later) Implement the openuri method.
 
     GError* error = NULL;
@@ -264,4 +283,8 @@ void set_pause_callback(PauseCallback callback) {
 
 void set_toggle_callback(ToggleCallback callback) {
     toggle_callback = callback;
+}
+
+void set_set_position_callback(SetPositionCallback callback) {
+    set_position_callback = callback;
 }

@@ -13,7 +13,7 @@ typedef struct Player Player;
 /* Create the dbus connection for mpris. */
 GDBusConnection* get_dbus_connection();
 /** Display the given track info in the player. */
-void diplay_track_info(Player* player, XmmsTrackInfo* info);
+void display_track_info(Player* player, XmmsTrackInfo* info);
 /** Set up the main MPRIS Object. */
 MainObject* init_main_dbus_object(GDBusConnection* bus);
 /** Set up the player MPRIS Object. */
@@ -38,5 +38,9 @@ void set_pause_callback(PauseCallback callback);
 typedef void (*ToggleCallback)();
 /** Set up a callback for clicking the play/pause button. */
 void set_toggle_callback(ToggleCallback callback);
+
+typedef void (*SetPositionCallback)(gint64 position);
+/** Set up a callback for jumping to a position in the current track */
+void set_set_position_callback(SetPositionCallback callback);
 
 #endif
