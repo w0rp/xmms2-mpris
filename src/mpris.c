@@ -54,7 +54,7 @@ void display_track_info(Player* player, XmmsTrackInfo* info) {
         entries[length++] = new_metadata_dict_string("xesam:url", info->url);
     }
 
-    entries[length++] = new_metadata_dict_int64("mpris:length", info->duration * 1000);
+    entries[length++] = new_metadata_dict_int64("mpris:length", ((int64_t) info->duration) * 1000);
 
     GVariant* dict = g_variant_new_array(G_VARIANT_TYPE("{sv}"), entries, length);
     mpris_media_player2_player_set_metadata((MprisMediaPlayer2Player*) player, dict);
