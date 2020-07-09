@@ -165,9 +165,11 @@ void init_xmms_loop(xmmsc_connection_t* con) {
     XMMS_CALLBACK_SET(con, xmmsc_playback_status, xmms_status_callback, NULL);
     // We have to listen to this event too.
     XMMS_CALLBACK_SET(con, xmmsc_broadcast_playback_status, xmms_status_callback, NULL);
+    // We have to listen to all three of these events to detect when the
+    // current track changes.
     XMMS_CALLBACK_SET(con, xmmsc_playback_current_id, xmms_current_id_callback, con);
-    // We have to listen to this event too.
     XMMS_CALLBACK_SET(con, xmmsc_broadcast_playback_current_id, xmms_current_id_callback, con);
+    XMMS_CALLBACK_SET(con, xmmsc_broadcast_medialib_entry_changed, xmms_current_id_callback, con);
 
     xmmsc_mainloop_gmain_init(con);
 }

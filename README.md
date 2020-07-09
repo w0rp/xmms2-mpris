@@ -29,8 +29,3 @@ make install
 
 You shouldn't install the client as `root` or another user. Install it as
 the same user that's starting `xmms2d`.
-
-## Known issues
-
-* If you pause a track via MPRIS then move to the next track, the track won't
-  update until you hit play in the UI.
