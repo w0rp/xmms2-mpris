@@ -28,6 +28,8 @@ int setup_app() {
     xmmsc_connection_t* con = con = xmmsc_init("xmms2-mpris");
 
     if (!con) {
+        fprintf(stderr, "xmmsc_init failed!\n");
+
         return 1;
     }
 
@@ -40,6 +42,8 @@ int setup_app() {
     GDBusConnection* bus = get_dbus_connection();
 
     if (!bus) {
+        fprintf(stderr, "D-Bus connection failed!\n");
+
         return 1;
     }
 
