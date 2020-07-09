@@ -65,4 +65,4 @@ add_executable(xmms2-mpris ${SRC_LIST})
 target_link_libraries(xmms2-mpris ${XMMS2_LIBRARIES} ${XMMS2GLIB_LIBRARIES} ${GLIB2_LIBRARIES})
 
 # For installing the binary.
-install(TARGETS xmms2-mpris DESTINATION bin)
+install(TARGETS xmms2-mpris DESTINATION "$ENV{HOME}/.config/xmms2/startup.d/")
