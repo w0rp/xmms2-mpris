@@ -163,9 +163,22 @@ int xmms_current_id_callback(xmmsv_t* value, void* data) {
     return true;
 }
 
+int xmms_playlist_length_callback(xmmsv_t* value, void* data) {
+    if (handle_xmms_error(value)) {
+        size_t position = (size_t) data;
+        int length = xmmsv_list_get_size(value);
+
+        if (playlist_position_callback) {
+            playlist_position_callback(position, length);
+        }
+    }
+
+    return true;
+}
+
 int xmms_playlist_pos_callback(xmmsv_t* value, void* data) {
     xmmsc_connection_t* con = data;
-    int32_t position = -1;
+    size_t position = -1;
 
     if (handle_xmms_error(value)) {
         position = get_dict_int(value, "position", -1);
@@ -173,14 +186,8 @@ int xmms_playlist_pos_callback(xmmsv_t* value, void* data) {
 
     if (position >= 0) {
         xmmsc_result_t* result = xmmsc_playlist_list_entries(con, NULL);
-        xmmsc_result_wait(result);
-        xmmsv_t* value = xmmsc_result_get_value(result);
-        int length = xmmsv_list_get_size(value);
+        xmmsc_result_notifier_set(result, xmms_playlist_length_callback, (void*) position);
         xmmsc_result_unref(result);
-
-        if (playlist_position_callback) {
-            playlist_position_callback(position, length);
-        }
     }
 
     return true;
@@ -211,11 +218,9 @@ void init_xmms_loop(xmmsc_connection_t* con) {
 
 void switch_track(xmmsc_connection_t* con, int32_t direction) {
     xmmsc_result_t* next_result = xmmsc_playlist_set_next_rel(con, direction);
-    xmmsc_result_wait(next_result);
     xmmsc_result_unref(next_result);
 
     xmmsc_result_t* playback_result = xmmsc_playback_tickle(con);
-    xmmsc_result_wait(playback_result);
     xmmsc_result_unref(playback_result);
 }
 
