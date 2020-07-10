@@ -209,6 +209,21 @@ void connect_player_callback(
     g_signal_connect(player, name, (GCallback) callback, NULL);
 }
 
+void update_previous_next_controls(
+    Player* player,
+    bool can_go_previous,
+    bool can_go_next
+) {
+    mpris_media_player2_player_set_can_go_previous(
+        (MprisMediaPlayer2Player*) player,
+        can_go_previous
+    );
+    mpris_media_player2_player_set_can_go_next(
+        (MprisMediaPlayer2Player*) player,
+        can_go_next
+    );
+}
+
 Player* init_player_dbus_object(GDBusConnection* bus) {
     MprisMediaPlayer2Player* player = mpris_media_player2_player_skeleton_new();
 
@@ -219,8 +234,6 @@ Player* init_player_dbus_object(GDBusConnection* bus) {
     mpris_media_player2_player_set_position(player, 0);
     mpris_media_player2_player_set_minimum_rate(player, 0);
     mpris_media_player2_player_set_maximum_rate(player, 0);
-    mpris_media_player2_player_set_can_go_next(player, true);
-    mpris_media_player2_player_set_can_go_previous(player, true);
     mpris_media_player2_player_set_can_play(player, true);
     mpris_media_player2_player_set_can_pause(player, true);
     mpris_media_player2_player_set_can_seek(player, true);

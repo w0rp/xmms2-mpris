@@ -125,6 +125,14 @@ void handle_track_info(XmmsTrackInfo* info) {
     display_track_info(app.player, info);
 }
 
+void handle_playlist_position_change(int32_t position, int32_t length) {
+    update_previous_next_controls(
+        app.player,
+        position > 0, // can_go_previous
+        position + 1 < length // can_go_next
+    );
+}
+
 int main(int argc, char** argv) {
     if (setup_app()) {
         return 1;
@@ -136,6 +144,7 @@ int main(int argc, char** argv) {
     set_xmms_playtime_callback(handle_playtime);
     set_xmms_status_callback(handle_status);
     set_xmms_track_info_callback(handle_track_info);
+    set_playlist_position_callback(handle_playlist_position_change);
 
     // Set up callbacks for MPRIS events.
     set_next_callback(move_to_next_track);

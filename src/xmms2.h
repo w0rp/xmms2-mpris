@@ -24,6 +24,12 @@ typedef void (*TrackInfoCallback)(XmmsTrackInfo* info);
  */
 void set_xmms_track_info_callback(TrackInfoCallback callback);
 
+typedef void (*PlaylistPositionCallback)(int32_t position, int32_t length);
+/**
+ * Set up a callback for updates to the playlist position.
+ */
+void set_playlist_position_callback(PlaylistPositionCallback callback);
+
 void init_xmms_loop(xmmsc_connection_t* con);
 
 /** Move to the next XMMS2 track. */

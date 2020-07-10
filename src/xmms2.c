@@ -8,6 +8,7 @@
 static PlayTimeCallback playtime_callback;
 static StatusCallback status_callback;
 static TrackInfoCallback track_info_callback;
+static PlaylistPositionCallback playlist_position_callback;
 
 void set_xmms_playtime_callback(PlayTimeCallback callback) {
     playtime_callback = callback;
@@ -19,6 +20,10 @@ void set_xmms_status_callback(StatusCallback callback) {
 
 void set_xmms_track_info_callback(TrackInfoCallback callback) {
     track_info_callback = callback;
+}
+
+void set_playlist_position_callback(PlaylistPositionCallback callback) {
+    playlist_position_callback = callback;
 }
 
 bool handle_xmms_error(xmmsv_t* value) {
@@ -121,7 +126,7 @@ int32_t get_dict_int(xmmsv_t* dict, const char* key, int32_t def) {
  * tracknr            - The track number.
  * url                - A URL for the track.
  */
-int handle_xmms_media_info(xmmsv_t* propdict, void *data) {
+int handle_xmms_media_info(xmmsv_t* propdict, void* data) {
     if (handle_xmms_error(propdict)) {
         XmmsTrackInfo info = (XmmsTrackInfo) {};
 
@@ -143,7 +148,7 @@ int handle_xmms_media_info(xmmsv_t* propdict, void *data) {
     return false;
 }
 
-int xmms_current_id_callback(xmmsv_t* value, void *data) {
+int xmms_current_id_callback(xmmsv_t* value, void* data) {
     int32_t current_id;
     xmmsc_connection_t* con = data;
 
@@ -152,6 +157,29 @@ int xmms_current_id_callback(xmmsv_t* value, void *data) {
             xmmsc_result_t* result = xmmsc_medialib_get_info(con, current_id);
             xmmsc_result_notifier_set(result, handle_xmms_media_info, NULL);
             xmmsc_result_unref(result);
+        }
+    }
+
+    return true;
+}
+
+int xmms_playlist_pos_callback(xmmsv_t* value, void* data) {
+    xmmsc_connection_t* con = data;
+    int32_t position = -1;
+
+    if (handle_xmms_error(value)) {
+        position = get_dict_int(value, "position", -1);
+    }
+
+    if (position >= 0) {
+        xmmsc_result_t* result = xmmsc_playlist_list_entries(con, NULL);
+        xmmsc_result_wait(result);
+        xmmsv_t* value = xmmsc_result_get_value(result);
+        int length = xmmsv_list_get_size(value);
+        xmmsc_result_unref(result);
+
+        if (playlist_position_callback) {
+            playlist_position_callback(position, length);
         }
     }
 
@@ -170,8 +198,15 @@ void init_xmms_loop(xmmsc_connection_t* con) {
     XMMS_CALLBACK_SET(con, xmmsc_playback_current_id, xmms_current_id_callback, con);
     XMMS_CALLBACK_SET(con, xmmsc_broadcast_playback_current_id, xmms_current_id_callback, con);
     XMMS_CALLBACK_SET(con, xmmsc_broadcast_medialib_entry_changed, xmms_current_id_callback, con);
+    XMMS_CALLBACK_SET(con, xmmsc_broadcast_playlist_current_pos, xmms_playlist_pos_callback, con);
 
     xmmsc_mainloop_gmain_init(con);
+
+    // Request the current playlist at the start, so we can check if we need to
+    // enable/disable previous and next buttons.
+    xmmsc_result_t* pos_result = xmmsc_playlist_current_pos(con, NULL);
+    xmmsc_result_notifier_set(pos_result, xmms_playlist_pos_callback, con);
+    xmmsc_result_unref(pos_result);
 }
 
 void switch_track(xmmsc_connection_t* con, int32_t direction) {

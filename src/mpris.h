@@ -2,6 +2,7 @@
 #define __XMMS2_MPRIS_MPRIS_H_
 
 #include <gio/gio.h>
+#include <stdbool.h>
 
 #include "track-info.h"
 
@@ -45,5 +46,11 @@ void set_set_position_callback(SetPositionCallback callback);
 
 void update_position(Player* player, int64_t position);
 void update_status(Player* player, const char* status);
+/** Enable/disable previous and next controls. */
+void update_previous_next_controls(
+    Player* player,
+    bool can_go_previous,
+    bool can_go_next
+);
 
 #endif
