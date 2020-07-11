@@ -11,11 +11,11 @@ set(SRC_LIST
 
 # Set C version and warning flags for C compilers.
 if(CMAKE_COMPILER_IS_GNUCC)
-    set(CMAKE_CXX_FLAGS "-c11 -Wno-visibility")
+    set(CMAKE_CXX_FLAGS "-c11 -O3 -Wno-visibility")
 endif()
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-    set(CMAKE_CXX_FLAGS "-c11 -Wall -Wno-visibility")
+    set(CMAKE_CXX_FLAGS "-c11 -O3 -Wall -Wno-visibility")
 endif()
 
 # Generate compile_commands.json
