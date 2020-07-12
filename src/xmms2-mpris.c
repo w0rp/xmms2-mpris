@@ -104,7 +104,7 @@ void set_position(gint64 position) {
 
 void handle_playtime(int32_t playtime) {
     // Handle the position in a precision of one second.
-    update_position(app.player, (playtime / 1000) * 1000 * 1000);
+    update_position(app.player, ((int64_t) playtime / 1000) * 1000 * 1000);
 }
 
 void handle_status(PlaybackStatus status) {
