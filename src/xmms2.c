@@ -137,6 +137,7 @@ int handle_xmms_media_info(xmmsv_t* propdict, void* data) {
         info.title = get_dict_string(dict, "title", "");
         info.album = get_dict_string(dict, "album", "");
         info.url = get_dict_string(dict, "url", "");
+        info.art_url = "";
 
         if (track_info_callback) {
             track_info_callback(&info);

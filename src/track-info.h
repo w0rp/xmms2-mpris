@@ -13,6 +13,8 @@ typedef struct XmmsTrackInfo {
     const char* album;
     /** The file:// URL for the file being played. */
     const char* url;
+    /** The file:// URL for the album art. */
+    const char* art_url;
     /** The track duration in milliseconds. */
     int32_t duration;
 } XmmsTrackInfo;
