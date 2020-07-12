@@ -98,8 +98,18 @@ void toggle_track() {
 }
 
 void set_position(gint64 position) {
+    bool should_play_pause = app.status == STATUS_PAUSED;
+
+    if (should_play_pause) {
+        play_track();
+    }
+
     // Seek in a precision of one second.
     seek_xmms_track_position(app.con, (position / 1000 / 1000) * 1000);
+
+    if (should_play_pause) {
+        pause_track();
+    }
 }
 
 void handle_playtime(int32_t playtime) {
