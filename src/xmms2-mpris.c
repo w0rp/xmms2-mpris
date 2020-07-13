@@ -3,11 +3,11 @@
 #include <linux/limits.h>
 
 #include <gio/gio.h>
+#include <glib.h>
 
 #include "track-info.h"
 #include "xmms2.h"
 #include "mpris.h"
-#include "uri.h"
 #include "art.h"
 
 /** The global data for the app. */
@@ -134,33 +134,37 @@ void handle_status(PlaybackStatus status) {
 }
 
 void handle_track_info(XmmsTrackInfo* info) {
-    // Create a buffer with enough size to store the
-    // URI converted to a path, plus a new filename on the end.
-    size_t buffer_size = strlen(info->url) + NAME_MAX + 1;
-    char* buffer = calloc(buffer_size, sizeof(char));
-    char* out_buffer = NULL;
+    char* filename = g_filename_from_uri(info->url, NULL, NULL);
 
-    if (
-        uri_to_path(&buffer, info->url)
-        && find_album_art(&buffer, buffer_size)
-    ) {
-        // Create a buffer with enough size to store percent
-        // encodings of all of the characters.
-        size_t out_buffer_size = buffer_size + NAME_MAX * 2;
-        out_buffer = calloc(out_buffer_size, sizeof(char));
+    // Replace plusses with spaces.
+    // XMMS2 encodes spaces in filenames as spaces.
+    if (filename) {
+        size_t filename_length = strlen(filename);
 
-        path_to_uri(&out_buffer, buffer);
+        for (size_t index = 0; index < filename_length; ++index) {
+            if (filename[index] == '+') {
+                filename[index] = ' ';
+            }
+        }
+    }
 
-        info->art_url = out_buffer;
+    char* art_filename = NULL;
+    char* art_uri = NULL;
+
+    if (filename) {
+        art_filename = find_album_art(filename);
+
+        if (art_filename) {
+            art_uri = g_filename_to_uri(art_filename, NULL, NULL);
+            info->art_url = art_uri;
+        }
     }
 
     display_track_info(app.player, info);
 
-    free(buffer);
-
-    if (out_buffer) {
-        free(out_buffer);
-    }
+    g_free(filename);
+    free(art_filename);
+    g_free(art_uri);
 }
 
 void handle_playlist_position_change(int32_t position, int32_t length) {

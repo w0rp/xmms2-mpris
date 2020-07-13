@@ -7,7 +7,6 @@ set(SRC_LIST
     src/mpris-player.c
     src/xmms2.c
     src/mpris.c
-    src/uri.c
     src/art.c
 )
 

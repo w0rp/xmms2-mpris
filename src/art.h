@@ -6,10 +6,7 @@
 
 /**
  * Find album art for file, given a path to an audio file.
- *
- * If album art is found, the the path will be updated to point to it
- * instead.
  */
-bool find_album_art(char** buffer, size_t path_size);
+char* find_album_art(const char* filename);
 
 #endif /* __XMMS2_MPRIS_ART_H__ */

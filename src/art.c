@@ -1,6 +1,8 @@
 #include <string.h>
 #include <strings.h>
 #include <dirent.h>
+#include <stdlib.h>
+#include <linux/limits.h>
 
 #include "art.h"
 
@@ -18,15 +20,21 @@ static const char* ART_NAMES[] = {
 /** The length of typical album art names. */
 static const size_t ART_NAMES_LENGTH = sizeof(ART_NAMES) / sizeof(char*);
 
-bool find_album_art(char** buffer, size_t path_size) {
-    char* path = *buffer;
+char* find_album_art(const char* filename) {
+    size_t path_size = strlen(filename) + NAME_MAX;
+    char* path = calloc(path_size, sizeof(char));
+    strcpy(path, filename);
 
     // Replace the path with just the dirname.
-    char* last_slash = strrchr(path, '/');
+    char* basename_ptr = strrchr(path, '/');
 
-    if (last_slash) {
-        memset(last_slash + 1, '\0', path_size - (last_slash - path) - 1);
+    if (!basename_ptr) {
+        return NULL;
     }
+
+    // Delete the characters after slash to remove the basename.
+    ++basename_ptr;
+    memset(basename_ptr, '\0', path_size - (basename_ptr - path));
 
     bool match_found = false;
 
@@ -47,13 +55,15 @@ bool find_album_art(char** buffer, size_t path_size) {
         }
 
         if (match_found) {
-            // Update the path to replace the basename with the match.
-            strcpy(last_slash + 1, entry->d_name);
-            break;
+            strcpy(basename_ptr, entry->d_name);
         }
 
         closedir(dir);
+
+        if (match_found) {
+            break;
+        }
     }
 
-    return match_found;
+    return match_found ? path : NULL;
 }
