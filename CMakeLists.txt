@@ -10,14 +10,7 @@ set(SRC_LIST
     src/art.c
 )
 
-# Set C version and warning flags for C compilers.
-if(CMAKE_COMPILER_IS_GNUCC)
-    set(CMAKE_CXX_FLAGS "-c11 -O3 -Wno-visibility")
-endif()
-
-if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-    set(CMAKE_CXX_FLAGS "-c11 -O3 -Wall -Wno-visibility")
-endif()
+set(CMAKE_C_FLAGS "-std=c11 -O3 -Wall -Wno-visibility")
 
 # Generate compile_commands.json
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -51,7 +44,7 @@ add_custom_command(OUTPUT src/mpris-player.c
 )
 
 # Include xmms2 stuff
-include_directories(${XMMS2_INCLUDE_DIRS})
+include_directories(SYSTEM ${XMMS2_INCLUDE_DIRS})
 link_directories(${XMMS2_LIBRARY_DIRS})
 include_directories(${XMMS2GLIB_INCLUDE_DIRS})
 link_directories(${XMMS2GLIB_LIBRARY_DIRS})
