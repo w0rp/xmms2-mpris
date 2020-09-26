@@ -194,6 +194,38 @@ int xmms_playlist_pos_callback(xmmsv_t* value, void* data) {
     return true;
 }
 
+void ask_for_xmms_playlist_position(xmmsc_connection_t* con) {
+    xmmsc_result_t* pos_result = xmmsc_playlist_current_pos(con, NULL);
+    xmmsc_result_notifier_set(pos_result, xmms_playlist_pos_callback, con);
+    xmmsc_result_unref(pos_result);
+}
+
+int xmms_playlist_changed_callback(xmmsv_t* value, void* data) {
+    xmmsc_connection_t* con = data;
+
+    if (handle_xmms_error(value)) {
+        int type = get_dict_int(value, "type", -1);
+
+        switch(type) {
+        case XMMS_PLAYLIST_CHANGED_ADD:
+        case XMMS_PLAYLIST_CHANGED_REMOVE:
+        case XMMS_PLAYLIST_CHANGED_INSERT:
+        case XMMS_PLAYLIST_CHANGED_CLEAR:
+        case XMMS_PLAYLIST_CHANGED_MOVE:
+        case XMMS_PLAYLIST_CHANGED_SORT:
+        case XMMS_PLAYLIST_CHANGED_SHUFFLE:
+            // Ask for an update to the playlist position each time it changes.
+            ask_for_xmms_playlist_position(con);
+
+            break;
+        default:
+            break;
+        }
+    }
+
+    return true;
+}
+
 void init_xmms_loop(xmmsc_connection_t* con) {
     playtime_callback = NULL;
 
@@ -207,14 +239,14 @@ void init_xmms_loop(xmmsc_connection_t* con) {
     XMMS_CALLBACK_SET(con, xmmsc_broadcast_playback_current_id, xmms_current_id_callback, con);
     XMMS_CALLBACK_SET(con, xmmsc_broadcast_medialib_entry_changed, xmms_current_id_callback, con);
     XMMS_CALLBACK_SET(con, xmmsc_broadcast_playlist_current_pos, xmms_playlist_pos_callback, con);
+    // Handle the playlist changing, so we can poke for more information.
+    XMMS_CALLBACK_SET(con, xmmsc_broadcast_playlist_changed, xmms_playlist_changed_callback, con);
 
     xmmsc_mainloop_gmain_init(con);
 
     // Request the current playlist at the start, so we can check if we need to
     // enable/disable previous and next buttons.
-    xmmsc_result_t* pos_result = xmmsc_playlist_current_pos(con, NULL);
-    xmmsc_result_notifier_set(pos_result, xmms_playlist_pos_callback, con);
-    xmmsc_result_unref(pos_result);
+    ask_for_xmms_playlist_position(con);
 }
 
 void switch_track(xmmsc_connection_t* con, int32_t direction) {
