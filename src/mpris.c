@@ -14,6 +14,7 @@ static PlayCallback play_callback;
 static PauseCallback pause_callback;
 static ToggleCallback toggle_callback;
 static SetPositionCallback set_position_callback;
+static VolumeChangedCallback volume_changed_callback;
 
 GVariant* new_metadata_dict_string(const char* key, const char* value) {
     return g_variant_new_dict_entry(
@@ -199,6 +200,15 @@ static gboolean mpris_set_position(
     return true;
 }
 
+static void mpris_volume_changed(GObject* object) {
+    gdouble volume;
+    g_object_get(object, "volume", &volume, NULL);
+
+    if (volume_changed_callback) {
+        volume_changed_callback(volume);
+    }
+}
+
 /** Connect a callback function to the MPRIS player. */
 void connect_player_callback(
     MprisMediaPlayer2Player* player,
@@ -227,12 +237,19 @@ void update_previous_next_controls(
     );
 }
 
+void update_volume(Player* player, gdouble volume) {
+    mpris_media_player2_player_set_volume(
+        (MprisMediaPlayer2Player*) player,
+        volume
+    );
+}
+
 Player* init_player_dbus_object(GDBusConnection* bus) {
     MprisMediaPlayer2Player* player = mpris_media_player2_player_skeleton_new();
 
     mpris_media_player2_player_set_playback_status(player, "Stopped");
     mpris_media_player2_player_set_rate(player, 0);
-    mpris_media_player2_player_set_volume(player, 0);
+    mpris_media_player2_player_set_volume(player, true);
     // The position uses the time in microseconds.
     mpris_media_player2_player_set_position(player, 0);
     mpris_media_player2_player_set_minimum_rate(player, 0);
@@ -248,6 +265,7 @@ Player* init_player_dbus_object(GDBusConnection* bus) {
     pause_callback = NULL;
     toggle_callback = NULL;
     set_position_callback = NULL;
+    volume_changed_callback = NULL;
 
     connect_player_callback(player, "handle-next", mpris_next);
     connect_player_callback(player, "handle-previous", mpris_previous);
@@ -255,6 +273,7 @@ Player* init_player_dbus_object(GDBusConnection* bus) {
     connect_player_callback(player, "handle-pause", mpris_pause);
     connect_player_callback(player, "handle-play-pause", mpris_toggle);
     g_signal_connect(player, "handle-set-position", (GCallback) mpris_set_position, NULL);
+    g_signal_connect(player, "notify::volume", (GCallback) mpris_volume_changed, NULL);
 
     // TODO(later) Implement the playpause method.
     // TODO(later) Implement the stop method.
@@ -301,6 +320,10 @@ void set_toggle_callback(ToggleCallback callback) {
 
 void set_set_position_callback(SetPositionCallback callback) {
     set_position_callback = callback;
+}
+
+void set_volume_changed_callback(VolumeChangedCallback callback) {
+    volume_changed_callback = callback;
 }
 
 void update_status(Player* player, const char* status) {

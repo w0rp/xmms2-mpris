@@ -44,6 +44,10 @@ typedef void (*SetPositionCallback)(gint64 position);
 /** Set up a callback for jumping to a position in the current track */
 void set_set_position_callback(SetPositionCallback callback);
 
+typedef void (*VolumeChangedCallback)(gdouble volume);
+/** Set up a callback when the volume is changed. */
+void set_volume_changed_callback(VolumeChangedCallback callback);
+
 void update_position(Player* player, int64_t position);
 void update_status(Player* player, const char* status);
 /** Enable/disable previous and next controls. */
@@ -52,5 +56,8 @@ void update_previous_next_controls(
     bool can_go_previous,
     bool can_go_next
 );
+
+/** Update the volume in the MPRIS interface. */
+void update_volume(Player* player, gdouble volume);
 
 #endif

@@ -30,6 +30,12 @@ typedef void (*PlaylistPositionCallback)(int32_t position, int32_t length);
  */
 void set_playlist_position_callback(PlaylistPositionCallback callback);
 
+typedef void (*Xmms2VolumeChangedCallback)(uint32_t volume);
+/**
+ * Set up a callback for when xmms2 changes volume.
+ */
+void set_xmms2_volume_changed_callback(Xmms2VolumeChangedCallback callback);
+
 void init_xmms_loop(xmmsc_connection_t* con);
 
 /** Move to the next XMMS2 track. */
@@ -42,5 +48,7 @@ void play_xmms_track(xmmsc_connection_t* con);
 void pause_xmms_track(xmmsc_connection_t* con);
 /** Set the current track to the given position. */
 void seek_xmms_track_position(xmmsc_connection_t* con, int milliseconds);
+/** Set the volume of xmms2. */
+void set_xmms_volume(xmmsc_connection_t* con, uint32_t volume);
 
 #endif

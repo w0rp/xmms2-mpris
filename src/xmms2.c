@@ -9,6 +9,7 @@ static PlayTimeCallback playtime_callback;
 static StatusCallback status_callback;
 static TrackInfoCallback track_info_callback;
 static PlaylistPositionCallback playlist_position_callback;
+static Xmms2VolumeChangedCallback xmms2_volume_changed_callback;
 
 void set_xmms_playtime_callback(PlayTimeCallback callback) {
     playtime_callback = callback;
@@ -24,6 +25,10 @@ void set_xmms_track_info_callback(TrackInfoCallback callback) {
 
 void set_playlist_position_callback(PlaylistPositionCallback callback) {
     playlist_position_callback = callback;
+}
+
+void set_xmms2_volume_changed_callback(Xmms2VolumeChangedCallback callback) {
+    xmms2_volume_changed_callback = callback;
 }
 
 bool handle_xmms_error(xmmsv_t* value) {
@@ -226,8 +231,59 @@ int xmms_playlist_changed_callback(xmmsv_t* value, void* data) {
     return true;
 }
 
+
+/**
+ * Set a channel volume in a linked list.
+ */
+void get_xmms_channel_volumes(const char* key, xmmsv_t* value, void* data) {
+    GSList** volume_list = (GSList**) data;
+    int32_t volume;
+    xmmsv_get_int(value, &volume);
+    *volume_list = g_slist_prepend(*volume_list, (void*) (size_t) volume);
+}
+
+/**
+ * Handle the volume being set from the xmms2 server.
+ */
+int xmms_volume_changed_callback(xmmsv_t* value, void* data) {
+    uint32_t volume = 0;
+
+    if (handle_xmms_error(value)) {
+        // A linked-list of volume values for each channel.
+        GSList* volume_list = NULL;
+
+        xmmsv_dict_foreach(value, get_xmms_channel_volumes, &volume_list);
+
+        for(GSList* item = volume_list; item != NULL; item = item->next) {
+            uint32_t channel_volume = GPOINTER_TO_UINT(item->data);
+
+            if (volume < channel_volume) {
+                volume = channel_volume;
+            }
+        }
+
+        g_slist_free(volume_list);
+
+        if (xmms2_volume_changed_callback) {
+            xmms2_volume_changed_callback(volume);
+        }
+    }
+
+    return true;
+}
+
+void ask_for_xmms_volume(xmmsc_connection_t* con) {
+    xmmsc_result_t* result = xmmsc_playback_volume_get(con);
+    xmmsc_result_notifier_set(result, xmms_volume_changed_callback, con);
+    xmmsc_result_unref(result);
+}
+
 void init_xmms_loop(xmmsc_connection_t* con) {
     playtime_callback = NULL;
+    status_callback = NULL;
+    track_info_callback = NULL;
+    playlist_position_callback = NULL;
+    xmms2_volume_changed_callback = NULL;
 
     XMMS_CALLBACK_SET(con, xmmsc_signal_playback_playtime, xmms_playtime_callback, NULL);
     XMMS_CALLBACK_SET(con, xmmsc_playback_status, xmms_status_callback, NULL);
@@ -241,12 +297,17 @@ void init_xmms_loop(xmmsc_connection_t* con) {
     XMMS_CALLBACK_SET(con, xmmsc_broadcast_playlist_current_pos, xmms_playlist_pos_callback, con);
     // Handle the playlist changing, so we can poke for more information.
     XMMS_CALLBACK_SET(con, xmmsc_broadcast_playlist_changed, xmms_playlist_changed_callback, con);
+    // Handle the volume changing.
+    XMMS_CALLBACK_SET(con, xmmsc_broadcast_playback_volume_changed, xmms_volume_changed_callback, con);
 
     xmmsc_mainloop_gmain_init(con);
 
     // Request the current playlist at the start, so we can check if we need to
     // enable/disable previous and next buttons.
     ask_for_xmms_playlist_position(con);
+
+    // Ask for the volume at the start, so we can provide it to the interface.
+    ask_for_xmms_volume(con);
 }
 
 void switch_track(xmmsc_connection_t* con, int32_t direction) {
@@ -281,5 +342,11 @@ void seek_xmms_track_position(xmmsc_connection_t* con, int milliseconds) {
         milliseconds,
         XMMS_PLAYBACK_SEEK_SET
     );
+    xmmsc_result_unref(result);
+}
+
+void set_xmms_volume(xmmsc_connection_t* con, uint32_t volume) {
+    xmmsc_result_t* result;
+    result = xmmsc_playback_volume_set(con, "", volume);
     xmmsc_result_unref(result);
 }

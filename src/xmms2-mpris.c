@@ -112,6 +112,16 @@ void set_position(gint64 position) {
     }
 }
 
+void handle_xmms2_volume_changed(uint32_t volume) {
+    // The xmms2 volume is 0 to 100, and MRPIS wants 0.0 to 1.0.
+    update_volume(app.player, ((gdouble) volume) / 100);
+}
+
+void handle_volume_changed(gdouble volume) {
+    // The MPRIS volume is 0.0 to 1.0, and xmms2 wants 0 to 100.
+    set_xmms_volume(app.con, (uint32_t) (volume * 100));
+}
+
 void handle_playtime(int32_t playtime) {
     // Handle the position in a precision of one second.
     update_position(app.player, ((int64_t) playtime / 1000) * 1000 * 1000);
@@ -187,6 +197,7 @@ int main(int argc, char** argv) {
     set_xmms_status_callback(handle_status);
     set_xmms_track_info_callback(handle_track_info);
     set_playlist_position_callback(handle_playlist_position_change);
+    set_xmms2_volume_changed_callback(handle_xmms2_volume_changed);
 
     // Set up callbacks for MPRIS events.
     set_next_callback(move_to_next_track);
@@ -195,6 +206,7 @@ int main(int argc, char** argv) {
     set_pause_callback(pause_track);
     set_toggle_callback(toggle_track);
     set_set_position_callback(set_position);
+    set_volume_changed_callback(handle_volume_changed);
 
     g_main_loop_run(loop);
 
