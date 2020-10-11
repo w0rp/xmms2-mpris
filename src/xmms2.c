@@ -345,6 +345,15 @@ void seek_xmms_track_position(xmmsc_connection_t* con, int milliseconds) {
     xmmsc_result_unref(result);
 }
 
+void seek_xmms_track_offset(xmmsc_connection_t* con, int milliseconds) {
+    xmmsc_result_t* result =  xmmsc_playback_seek_ms(
+        con,
+        milliseconds,
+        XMMS_PLAYBACK_SEEK_CUR
+    );
+    xmmsc_result_unref(result);
+}
+
 void stop_xmms_track(xmmsc_connection_t* con) {
     xmmsc_result_t* result = xmmsc_playback_stop(con);
     xmmsc_result_unref(result);

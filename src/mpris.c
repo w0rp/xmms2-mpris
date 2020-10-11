@@ -15,6 +15,7 @@ static PauseCallback pause_callback;
 static StopCallback stop_callback;
 static ToggleCallback toggle_callback;
 static SetPositionCallback set_position_callback;
+static SeekCallback seek_callback;
 static VolumeChangedCallback volume_changed_callback;
 
 GVariant* new_metadata_dict_string(const char* key, const char* value) {
@@ -224,6 +225,21 @@ static void mpris_volume_changed(GObject* object) {
     }
 }
 
+static gboolean mpris_seek_position(
+    MprisMediaPlayer2Player* player,
+    GDBusMethodInvocation* invocation,
+    gint64 offset,
+    void* user_data
+) {
+    if (seek_callback) {
+        seek_callback(offset);
+    }
+
+    mpris_media_player2_player_complete_seek(player, invocation);
+
+    return true;
+}
+
 /** Connect a callback function to the MPRIS player. */
 void connect_player_callback(
     MprisMediaPlayer2Player* player,
@@ -281,6 +297,7 @@ Player* init_player_dbus_object(GDBusConnection* bus) {
     stop_callback = NULL;
     toggle_callback = NULL;
     set_position_callback = NULL;
+    seek_callback = NULL;
     volume_changed_callback = NULL;
 
     connect_player_callback(player, "handle-next", mpris_next);
@@ -290,11 +307,9 @@ Player* init_player_dbus_object(GDBusConnection* bus) {
     connect_player_callback(player, "handle-play-pause", mpris_toggle);
     connect_player_callback(player, "handle-stop", mpris_stop);
     g_signal_connect(player, "handle-set-position", (GCallback) mpris_set_position, NULL);
+    g_signal_connect(player, "handle-seek", (GCallback) mpris_seek_position, NULL);
     g_signal_connect(player, "notify::volume", (GCallback) mpris_volume_changed, NULL);
 
-    // TODO(later) Implement the playpause method.
-    // TODO(later) Implement the stop method.
-    // TODO(later) Implement the seek method.
     // TODO(later) Implement the openuri method.
 
     GError* error = NULL;
@@ -343,6 +358,10 @@ void set_set_position_callback(SetPositionCallback callback) {
     set_position_callback = callback;
 }
 
+void set_seek_callback(SeekCallback callback) {
+    seek_callback = callback;
+}
+
 void set_volume_changed_callback(VolumeChangedCallback callback) {
     volume_changed_callback = callback;
 }
@@ -352,5 +371,8 @@ void update_status(Player* player, const char* status) {
 }
 
 void update_position(Player* player, int64_t position) {
+    // We have to both set the position and seek for some reason for MPRIS to
+    // work in the system tray and with KDE Connect.
     mpris_media_player2_player_set_position((MprisMediaPlayer2Player*) player, position);
+    mpris_media_player2_player_emit_seeked((MprisMediaPlayer2Player*) player, position);
 }

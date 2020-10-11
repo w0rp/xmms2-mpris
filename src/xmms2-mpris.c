@@ -20,6 +20,7 @@ typedef struct App {
     MainObject* main_object;
     /** The Player object for MPRIS */
     Player* player;
+    /** The current playback status. */
     PlaybackStatus status;
 } App;
 
@@ -110,6 +111,21 @@ void set_position(gint64 position) {
 
     // Seek in a precision of one second.
     seek_xmms_track_position(app.con, (position / 1000 / 1000) * 1000);
+
+    if (should_play_pause) {
+        pause_track();
+    }
+}
+
+void seek(gint64 offset) {
+    bool should_play_pause = app.status == STATUS_PAUSED;
+
+    if (should_play_pause) {
+        play_track();
+    }
+
+    // Seek in a precision of one second.
+    seek_xmms_track_offset(app.con, (offset / 1000 / 1000) * 1000);
 
     if (should_play_pause) {
         pause_track();
@@ -211,6 +227,7 @@ int main(int argc, char** argv) {
     set_toggle_callback(toggle_track);
     set_stop_callback(stop_track);
     set_set_position_callback(set_position);
+    set_seek_callback(seek);
     set_volume_changed_callback(handle_volume_changed);
 
     g_main_loop_run(loop);

@@ -45,8 +45,12 @@ typedef void (*ToggleCallback)();
 void set_toggle_callback(ToggleCallback callback);
 
 typedef void (*SetPositionCallback)(gint64 position);
-/** Set up a callback for jumping to a position in the current track */
+/** Set up a callback for jumping to a position in the current track. */
 void set_set_position_callback(SetPositionCallback callback);
+
+typedef void (*SeekCallback)(gint64 offset);
+/** Set up a callback for moving back or forwards in a track. */
+void set_seek_callback(SeekCallback callback);
 
 typedef void (*VolumeChangedCallback)(gdouble volume);
 /** Set up a callback when the volume is changed. */

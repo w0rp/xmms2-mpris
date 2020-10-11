@@ -50,6 +50,8 @@ void pause_xmms_track(xmmsc_connection_t* con);
 void stop_xmms_track(xmmsc_connection_t* con);
 /** Set the current track to the given position. */
 void seek_xmms_track_position(xmmsc_connection_t* con, int milliseconds);
+/** Set the current track by a given offset. */
+void seek_xmms_track_offset(xmmsc_connection_t* con, int milliseconds);
 /** Set the volume of xmms2. */
 void set_xmms_volume(xmmsc_connection_t* con, uint32_t volume);
 
