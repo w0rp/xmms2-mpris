@@ -89,6 +89,10 @@ void pause_track() {
     pause_xmms_track(app.con);
 }
 
+void stop_track() {
+    stop_xmms_track(app.con);
+}
+
 void toggle_track() {
     if (app.status == STATUS_PLAYING) {
         pause_track();
@@ -205,6 +209,7 @@ int main(int argc, char** argv) {
     set_play_callback(play_track);
     set_pause_callback(pause_track);
     set_toggle_callback(toggle_track);
+    set_stop_callback(stop_track);
     set_set_position_callback(set_position);
     set_volume_changed_callback(handle_volume_changed);
 

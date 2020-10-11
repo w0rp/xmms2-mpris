@@ -12,6 +12,7 @@ static NextCallback next_callback;
 static PreviousCallback previous_callback;
 static PlayCallback play_callback;
 static PauseCallback pause_callback;
+static StopCallback stop_callback;
 static ToggleCallback toggle_callback;
 static SetPositionCallback set_position_callback;
 static VolumeChangedCallback volume_changed_callback;
@@ -170,6 +171,20 @@ static gboolean mpris_pause(
     return true;
 }
 
+static gboolean mpris_stop(
+    MprisMediaPlayer2Player* player,
+    GDBusMethodInvocation* invocation,
+    void* user_data
+) {
+    if (stop_callback) {
+        stop_callback();
+    }
+
+    mpris_media_player2_player_complete_stop(player, invocation);
+
+    return true;
+}
+
 static gboolean mpris_toggle(
     MprisMediaPlayer2Player* player,
     GDBusMethodInvocation* invocation,
@@ -263,6 +278,7 @@ Player* init_player_dbus_object(GDBusConnection* bus) {
     previous_callback = NULL;
     play_callback = NULL;
     pause_callback = NULL;
+    stop_callback = NULL;
     toggle_callback = NULL;
     set_position_callback = NULL;
     volume_changed_callback = NULL;
@@ -272,6 +288,7 @@ Player* init_player_dbus_object(GDBusConnection* bus) {
     connect_player_callback(player, "handle-play", mpris_play);
     connect_player_callback(player, "handle-pause", mpris_pause);
     connect_player_callback(player, "handle-play-pause", mpris_toggle);
+    connect_player_callback(player, "handle-stop", mpris_stop);
     g_signal_connect(player, "handle-set-position", (GCallback) mpris_set_position, NULL);
     g_signal_connect(player, "notify::volume", (GCallback) mpris_volume_changed, NULL);
 
@@ -312,6 +329,10 @@ void set_play_callback(PlayCallback callback) {
 
 void set_pause_callback(PauseCallback callback) {
     pause_callback = callback;
+}
+
+void set_stop_callback(StopCallback callback) {
+    stop_callback = callback;
 }
 
 void set_toggle_callback(ToggleCallback callback) {

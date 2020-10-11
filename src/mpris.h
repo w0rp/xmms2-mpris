@@ -36,6 +36,10 @@ typedef void (*PauseCallback)();
 /** Set up a callback for clicking the pause button. */
 void set_pause_callback(PauseCallback callback);
 
+typedef void (*StopCallback)();
+/** Set up a callback for clicking the stop button. */
+void set_stop_callback(StopCallback callback);
+
 typedef void (*ToggleCallback)();
 /** Set up a callback for clicking the play/pause button. */
 void set_toggle_callback(ToggleCallback callback);

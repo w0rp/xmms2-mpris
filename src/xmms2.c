@@ -345,6 +345,11 @@ void seek_xmms_track_position(xmmsc_connection_t* con, int milliseconds) {
     xmmsc_result_unref(result);
 }
 
+void stop_xmms_track(xmmsc_connection_t* con) {
+    xmmsc_result_t* result = xmmsc_playback_stop(con);
+    xmmsc_result_unref(result);
+}
+
 void set_xmms_volume(xmmsc_connection_t* con, uint32_t volume) {
     xmmsc_result_t* result;
     result = xmmsc_playback_volume_set(con, "", volume);
