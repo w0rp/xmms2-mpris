@@ -10,12 +10,19 @@
 static const char* ART_NAMES[] = {
     "folder.png",
     "folder.jpg",
+    "folder.jpeg",
     "cover.png",
     "cover.jpg",
+    "cover.jpeg",
+    "front.png",
+    "front.jpg",
+    "front.jpeg",
     "thumb.png",
     "thumb.jpg",
+    "thumb.jpeg",
     "album.png",
     "album.jpg",
+    "album.jpeg",
 };
 /** The length of typical album art names. */
 static const size_t ART_NAMES_LENGTH = sizeof(ART_NAMES) / sizeof(char*);
