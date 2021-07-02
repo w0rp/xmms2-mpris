@@ -190,11 +190,26 @@ void handle_track_info(XmmsTrackInfo* info) {
         }
     }
 
+    // Fill Artist from title.
+    // Web radios mostly use title only: "Artist - Title" or "Artist / Title"
+    char **webtitle_array = NULL;
+    if (!(info->artist && info->artist[0] != '\0')) {
+        webtitle_array = g_strsplit(info->title, " - ", 2);
+        if (g_strv_length(webtitle_array) < 2) {
+            webtitle_array = g_strsplit(info->title, " / ", 2);
+        }
+        if (g_strv_length(webtitle_array) >= 2) {
+            info->artist = webtitle_array[0];
+            info->title = webtitle_array[1];
+        }
+    }
+
     display_track_info(app.player, info);
 
     g_free(filename);
     free(art_filename);
     g_free(art_uri);
+    g_strfreev(webtitle_array);
 }
 
 void handle_playlist_position_change(int32_t position, int32_t length) {
