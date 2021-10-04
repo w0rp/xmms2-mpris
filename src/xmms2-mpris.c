@@ -193,11 +193,14 @@ void handle_track_info(XmmsTrackInfo* info) {
     // Fill Artist from title.
     // Web radios mostly use title only: "Artist - Title" or "Artist / Title"
     char **webtitle_array = NULL;
+
     if (!(info->artist && info->artist[0] != '\0')) {
         webtitle_array = g_strsplit(info->title, " - ", 2);
+
         if (g_strv_length(webtitle_array) < 2) {
             webtitle_array = g_strsplit(info->title, " / ", 2);
         }
+
         if (g_strv_length(webtitle_array) >= 2) {
             info->artist = webtitle_array[0];
             info->title = webtitle_array[1];
