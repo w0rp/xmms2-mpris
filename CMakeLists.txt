@@ -29,14 +29,14 @@ if(NOT GDBUSCODEGEN)
 endif()
 
 # Generate the DBUS mpris main object from the XML interface file.
-add_custom_command(OUTPUT src/mpris-object.c
+add_custom_command(OUTPUT src/mpris-object.c src/mpris-object.h
     WORKING_DIRECTORY src
     COMMAND ${GDBUSCODEGEN} --interface-prefix org.mpris. --c-namespace Mpris
         --generate-c-code mpris-object mpris2.xml
     DEPENDS src/mpris2.xml
 )
 
-add_custom_command(OUTPUT src/mpris-player.c
+add_custom_command(OUTPUT src/mpris-player.c src/mpris-player.h
     WORKING_DIRECTORY src
     COMMAND ${GDBUSCODEGEN} --interface-prefix org.mpris. --c-namespace Mpris
         --generate-c-code mpris-player mpris2-player.xml
@@ -59,4 +59,4 @@ add_executable(xmms2-mpris ${SRC_LIST})
 target_link_libraries(xmms2-mpris ${XMMS2_LIBRARIES} ${XMMS2GLIB_LIBRARIES} ${GLIB2_LIBRARIES})
 
 # For installing the binary.
-install(TARGETS xmms2-mpris DESTINATION "/usr/share/xmms2/scripts/startup.d/")
+install(TARGETS xmms2-mpris DESTINATION ${CMAKE_INSTALL_PREFIX}/share/xmms2/scripts/startup.d)

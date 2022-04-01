@@ -29,9 +29,12 @@ mkdir "$workdir/DEBIAN"
     echo 'Package: xmms2-mpris'
     echo "Version: $version"
     echo 'Architecture: amd64'
+    echo 'Section: sound'
     echo 'Maintainer: w0rp <dev@w0rp.com>'
-    echo 'Description: MPRIS controls for xmms2.'
+    echo 'Homepage: https://github.com/w0rp/xmms2-mpris'
     echo 'Depends: xmms2'
+    echo 'Description: MPRIS controls for xmms2'
+    echo ' Integrate xmms2 with system media controls.'
 ) > "$workdir/DEBIAN/control"
 
 dpkg-deb --build --root-owner-group "$workdir"
