@@ -45,7 +45,16 @@ void display_track_info(Player* player, XmmsTrackInfo* info) {
     }
 
     if (info->artist && info->artist[0] != '\0') {
-        entries[length++] = new_metadata_dict_string("xesam:artist", info->artist);
+        GVariant* string = g_variant_new_string(info->artist);
+        GVariant* array = g_variant_new_array(
+            G_VARIANT_TYPE_STRING,
+            &string,
+            1
+        );
+        entries[length++] = g_variant_new_dict_entry(
+            g_variant_new_string("xesam:artist"),
+            g_variant_new_variant(array)
+        );
     }
 
     if (info->album && info->album[0] != '\0') {
