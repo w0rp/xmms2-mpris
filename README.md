@@ -23,13 +23,11 @@ make
 ```
 
 You can run the client with `./xmms2-mpris`. The `xmms2d` will need to already
-be running. You can run the install script to install the client to
-`~/.config/xmms2/startup.d/`, so it will automatically start whenever xmms2
-does.
+be running.
+
+You can install the client for all users, so it will start automatically
+whenever xmms2 does.
 
 ```
-make install
+sudo make install
 ```
-
-You shouldn't install the client as `root` or another user. Install it as
-the same user that's starting `xmms2d`.
