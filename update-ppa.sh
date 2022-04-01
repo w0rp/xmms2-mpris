@@ -35,9 +35,7 @@ mkdir -p "$debiandir"
     echo '#!/usr/bin/make -f'
     echo
     echo 'build:'
-    # shellcheck disable=SC2016
     echo '	cmake -DCMAKE_INSTALL_PREFIX=debian/tmp/usr .'
-    # shellcheck disable=SC2016
     echo '	make'
     echo
     echo 'binary: binary-indep binary-arch'
@@ -46,7 +44,6 @@ mkdir -p "$debiandir"
     echo '	# Nothing to do'
     echo
     echo 'binary-arch:'
-    # shellcheck disable=SC2016
     echo '	cmake -P cmake_install.cmake'
     echo '	mkdir debian/tmp/DEBIAN'
     echo '	dpkg-gencontrol -pxmms2-mpris'
@@ -57,8 +54,8 @@ mkdir -p "$debiandir"
     echo '	rm -f CMakeCache.txt'
     echo '	rm -f cmake_install.cmake'
     echo '	rm -f xmms2-mpris'
-    echo '	rm -f mpris-player.c mpris-player.h'
-    echo '	rm -f mpris-object.c mpris-object.h'
+    echo '	rm -f src/mpris-player.c src/mpris-player.h'
+    echo '	rm -f src/mpris-object.c src/mpris-object.h'
     echo '	rm -f *.o'
     echo
     echo '.PHONY: binary binary-arch binary-indep clean'
@@ -81,10 +78,8 @@ rsync -auv \
     --exclude mpris-player.h \
     --exclude mpris-object.c \
     --exclude mpris-object.h \
-    src/ "$srcdir"
+    src/ "$srcdir/src/"
 cp CMakeLists.txt "$srcdir/CMakeLists.txt"
-sed -i 's:src/::g' "$srcdir/CMakeLists.txt"
-sed -i '/WORKING_DIRECTORY src/d' "$srcdir/CMakeLists.txt"
 
 (
     cd "$workdir"
