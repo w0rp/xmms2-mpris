@@ -9,7 +9,7 @@ if ! [ -f xmms2-mpris ]; then
     exit 1
 fi
 
-version=$(git describe --tags | sed 's/v//')
+version=$(git describe --tags --abbrev=0 | sed 's/v//')
 workdir="xmms2-mpris_${version}_amd64"
 
 if [ -d "$workdir" ]; then
